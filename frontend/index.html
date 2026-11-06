@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BL Creation App</title>
+<script>
+  try {
+    var t = localStorage.getItem("bl-theme") || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+    document.documentElement.dataset.theme = t;
+  } catch (e) { document.documentElement.dataset.theme = "dark"; }
+</script>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+<div class="bg" aria-hidden="true"><i></i><i></i><i></i></div>
+
+<div class="app">
+  <!-- Top Navigation Bar -->
+  <header class="top-nav glass">
+    <div class="brand">
+        
+      <div>
+        <div class="brand-title">BL AUTOMATION APP</div>
+        <div class="muted small">Bill of Lading Document Automation</div>
+      </div>
+    </div>
+
+    <!-- Right-aligned group holding Nav Tabs and Theme Toggle -->
+    <div class="header-right-group">
+      <nav class="nav" id="nav"></nav>
+      <button class="theme-icon-btn" id="theme-toggle" aria-label="Toggle color theme" title="Toggle theme">
+        <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2m-4.22-7.78l-1.42 1.42M5.64 18.36l-1.42 1.42"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content Deck -->
+  <main class="deck" id="deck">
+    <!-- View: Create BL -->
+    <section class="view is-active" id="view-create">
+      <div class="view-header" style="text-align: center;">
+        <h1>BILL OF LADING AUTOMATION APP</h1>
+        <p class="sub">Automatically runs all required macros from start to finish for complete BL document processing.</p>
+      </div>
+
+      <div class="glass create-panel" id="create" style="max-width: 750px; margin-inline: auto;">
+        <div id="create-setup">
+          <div style="text-align: center;">
+            <h2>Vessel & Voyage Configuration</h2>
+          <p class="muted small" style="margin-bottom: 16px;">Enter the vessel metadata to populate the templates automatically.</p>
+          </div>
+          
+          <!-- Vessel Details Input Grid -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px;">
+            <div>
+              <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px;">Vessel Name</label>
+              <input type="text" id="vessel_name" class="input-field" placeholder="e.g. AMUR " style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid lightblue; background: transparent; color: inherit; outline-color: none;">
+            </div>
+            <div>
+              <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px;">Voyage No.</label>
+              <input type="text" id="voyage_no" class="input-field" placeholder="e.g. V-30" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid lightblue; background: transparent;  color: inherit;">
+            </div>
+            <div>
+              <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px;">Port of Loading (POL)</label>
+              <input type="text" id="pol" class="input-field" placeholder="e.g. YOKOHAMA, JAPAN" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid lightblue; background: transparent;  color: inherit;">
+            </div>
+            <div>
+              <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px;">Port of Discharge (POD)</label>
+              <input type="text" id="pod" class="input-field" placeholder="e.g. VLADIVOSTOK, RUSSIA" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid lightblue; background: transparent;  color: inherit;">
+            </div>
+            <div>
+              <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px;">Estimated Time of Departure (ETD)</label>
+              <input type="date" id="etd" class="input-field" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid lightblue; background: transparent;  color: inherit;">
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px; margin-top: 24px;">
+              <input type="checkbox" id="navis_toggle" style="width: 18px; height: 18px; cursor: pointer; border: 1px solid lightblue; background: transparent;  color: inherit">
+              <label for="navis_toggle" style="cursor: pointer; font-size: 13px; font-weight: 500;">Use Navis Templates?</label>
+            </div>
+          </div>
+
+          <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 20px 0;">
+
+          <h2>Select Invoice Files</h2>
+          <p class="muted"></p>
+          <div class="chips" id="create-inputs"></div>
+          <p class="notice" id="create-error" hidden></p>
+          
+          <div class="row" style="margin-top: 16px;">
+            <button class="btn ghost" data-add="files">
+              <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Add files
+            </button>
+            <span class="spacer"></span>
+            <button class="btn primary big" id="create-btn">Create BL now</button>
+          </div>
+        </div>
+
+        <div id="create-run" hidden>
+          <ol class="steps" id="steps"></ol>
+          <p class="run-msg" id="run-msg"></p>
+          
+          <div class="log-container">
+            <div class="log-header">
+              <span class="small font-weight-500">Activity Log</span>
+              <button class="btn-text small" id="clear-create-log">Clear log</button>
+            </div>
+            <div class="log" id="run-log"></div>
+          </div>
+
+          <div class="summary" id="summary" hidden></div>
+          <div class="row"><span class="spacer"></span><button class="btn ghost" id="reset-btn" hidden>Start a new run</button></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- View: By Stage Grid -->
+    <section class="view" id="view-stages">
+      <div class="view-header" style="text-align: center;">
+        <h1>Create BL per macro</h1>
+        <p class="sub">Execute specific automation macros independently for targeted BL document processing.</p>
+      </div>
+      <div class="grid" id="stage-grid"></div>
+    </section>
+
+    <!-- Template for Individual Stage Module Views -->
+    <template id="module-template">
+  <section class="view">
+    <div class="view-header">
+      <button class="back" data-act="back">Back to Macros</button>
+      <span class="muted small eyebrow"></span>
+      <h1 class="title"></h1>
+      <p class="sub desc"></p>
+    </div>
+    <div class="module-grid">
+      <div class="glass panel">
+        <h2>Inputs</h2>
+
+        <!-- Vessel Configuration Section (Hidden by default, shown for Stage 4) -->
+        <div id="module-vessel-config" hidden style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 16px;">
+          <h3 style="font-size: 14px; margin-bottom: 10px; font-weight: 600;">Vessel & Voyage Configuration</h3>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div>
+              <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px;">Vessel Name</label>
+              <input type="text" id="mod_vessel_name" class="input-field" placeholder="e.g. AMUR" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid lightblue; background: transparent; color: inherit;">
+            </div>
+            <div>
+              <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px;">Voyage No.</label>
+              <input type="text" id="mod_voyage_no" class="input-field" placeholder="e.g. V-30" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid lightblue; background: transparent; color: inherit;">
+            </div>
+            <div>
+              <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px;">Port of Loading (POL)</label>
+              <input type="text" id="mod_pol" class="input-field" placeholder="e.g. YOKOHAMA, JAPAN" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid lightblue; background: transparent; color: inherit;">
+            </div>
+            <div>
+              <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px;">Port of Discharge (POD)</label>
+              <input type="text" id="mod_mod_pod" class="input-field" placeholder="e.g. VLADIVOSTOK, RUSSIA" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid lightblue; background: transparent; color: inherit;">
+            </div>
+            <div>
+              <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px;">ETD</label>
+              <input type="date" id="mod_etd" class="input-field" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid lightblue; background: transparent; color: inherit;">
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px; margin-top: 24px;">
+              <input type="checkbox" id="mod_navis_toggle" style="width: 18px; height: 18px; cursor: pointer; border: 1px solid lightblue; background: transparent; color: inherit;">
+              <label for="mod_navis_toggle" style="cursor: pointer; font-size: 13px; font-weight: 500;">Use Navis Templates?</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="chips" data-f="inputs"></div>
+        <div class="row wrap">
+          <button class="btn ghost" data-action="files">
+            <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Add files
+          </button>
+          <button class="btn ghost" data-action="folder">
+            <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+            Add folders
+          </button>
+        </div>
+        <button class="btn primary big-run" data-act="run">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Run Macro
+        </button>
+      </div>
+      <div class="glass panel">
+        <div class="log-header">
+          <h3>Activity Log</h3>
+          <button class="btn-text small" data-act="clear-log">Clear</button>
+        </div>
+        <div class="log" data-f="log"></div>
+      </div>
+    </div>
+  </section>
+    </template>
+  </main>
+</div>
+
+<!-- Modal Dialog -->
+<div class="modal" id="modal" hidden>
+  <div class="glass modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <h3 id="modal-title">Clear old output files?</h3>
+    <p class="muted" id="modal-text"></p>
+    <ul class="modal-list" id="modal-list"></ul>
+    <div class="row"><span class="spacer"></span>
+      <button class="btn ghost" id="modal-cancel">Cancel</button>
+      <button class="btn primary" id="modal-ok">Continue</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
