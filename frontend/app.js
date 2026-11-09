@@ -206,7 +206,7 @@ function buildModuleViews() {
     views[m.id] = view;
     stageInputs[m.id] = [];
 
-    $(".eyebrow", view).textContent = `Stage ${i + 1}`;
+    // $(".eyebrow", view).textContent = `Stage ${i + 1}`;
     $(".title", view).textContent = m.title;
     $(".desc", view).textContent = m.desc;
 

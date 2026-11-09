@@ -217,3 +217,65 @@ h3{font-size:15px;font-weight:500;margin-bottom:12px}
 .summary.is-fail p {
   color: #f56565 !important;
 }
+
+/* Layout container for the header elements */
+.view-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+/* Row holding the Back button and the "Stage 1" tag side by side */
+.header-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* Minimalist Back Button Styling */
+button.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none; /* Ensures no underline */
+  transition: all 0.2s ease;
+  border: 1px solid navy;
+}
+
+/* Prevent text decoration/underline on hover/focus */
+button.back:hover,
+button.back:focus {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+  text-decoration: none; 
+}
+
+button.back .back-icon {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s ease;
+}
+
+button.back:hover .back-icon {
+  transform: translateX(-3px);
+}
+
+button.back:active {
+  transform: scale(0.98);
+}
+
+/* Styling for the eyebrow/stage text next to it */
+.view-header .eyebrow {
+  font-size: 13px;
+  color: #a1a1aa;
+  font-weight: 500;
+}
