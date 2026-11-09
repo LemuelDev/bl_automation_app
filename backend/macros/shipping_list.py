@@ -19,6 +19,9 @@ MAX_WORKERS = 8
 # Double checks on the combined BASE data (0-based column numbers: D = 3, AM = 38, BE = 56)
 COL_CHASSIS = 3          # D   chassis no
 COL_IV_NO = 38           # AM  IV no
+COL_VESSEL = 45          # AT  Ocean Vessel
+COL_POL = 48             # AW  Port of Loading
+COL_POD = 49             # AX  Port of Discharge
 COL_SHIPPER = 56         # BE  shipper
 MAX_FLAG_LINES = 20      # how many individual flags are listed (the rest is summarised)
 ASK_BEFORE_SAVING = True # if flags were found, ask "Save the file anyway?" before the Save As window
@@ -158,16 +161,54 @@ def _files_text(items, origins):
     return ", ".join(names[:3]) + (" ..." if len(names) > 3 else "")
 
 
+# def check_duplicates(rows, origins, first_row=2):
+#     """
+#     Looks for two kinds of problems in the combined data:
+#       1. the same chassis no (column D) more than once
+#       2. the same IV no (column AM) used with different shippers (column BE)
+#     rows: the combined BASE rows. origins: the source file of every row.
+#     first_row: the sheet row of the first data row. -> (flags, counts)
+#     """
+#     flags = []
+
+#     chassis = {}
+#     for i, row in enumerate(rows):
+#         key = _norm(_get(row, COL_CHASSIS))
+#         if key:
+#             chassis.setdefault(key, []).append(i)
+#     chassis_dups = {k: v for k, v in chassis.items() if len(v) > 1}
+#     for items in chassis_dups.values():
+#         value = _shown(_get(rows[items[0]], COL_CHASSIS))
+#         flags.append(f"Duplicate chassis no '{value}' appears {len(items)} times "
+#                     f"({_rows_text(items, first_row)}; {_files_text(items, origins)})")
+
+#     ivs = {}
+#     for i, row in enumerate(rows):
+#         iv, shipper = _norm(_get(row, COL_IV_NO)), _norm(_get(row, COL_SHIPPER))
+#         if iv and shipper:
+#             entry = ivs.setdefault(iv, {"shown": _shown(_get(row, COL_IV_NO)), "by": {}})
+#             entry["by"].setdefault(shipper, {"shown": _shown(_get(row, COL_SHIPPER)), "rows": []})["rows"].append(i)
+#     iv_dups = {k: v for k, v in ivs.items() if len(v["by"]) > 1}
+#     for entry in iv_dups.values():
+#         parts = [f"'{g['shown']}' ({_rows_text(g['rows'], first_row)}; {_files_text(g['rows'], origins)})"
+#                 for g in entry["by"].values()]
+#         flags.append(f"IV no '{entry['shown']}' is used with different shippers: " + " vs ".join(parts))
+
+#     return flags, {"chassis": len(chassis_dups), "iv": len(iv_dups)}
+
+
 def check_duplicates(rows, origins, first_row=2):
     """
-    Looks for two kinds of problems in the combined data:
-      1. the same chassis no (column D) more than once
-      2. the same IV no (column AM) used with different shippers (column BE)
+    Looks for problems in the combined data:
+    1. duplicate chassis no (column D)
+    2. duplicate IV no (column AM) used with different shippers (column BE)
+    3. mismatched Ocean Vessel (column AT), Port of Loading (column AW), or Port of Discharge (column AX)
     rows: the combined BASE rows. origins: the source file of every row.
     first_row: the sheet row of the first data row. -> (flags, counts)
     """
     flags = []
 
+    # 1. Duplicate Chassis No
     chassis = {}
     for i, row in enumerate(rows):
         key = _norm(_get(row, COL_CHASSIS))
@@ -177,8 +218,9 @@ def check_duplicates(rows, origins, first_row=2):
     for items in chassis_dups.values():
         value = _shown(_get(rows[items[0]], COL_CHASSIS))
         flags.append(f"Duplicate chassis no '{value}' appears {len(items)} times "
-                     f"({_rows_text(items, first_row)}; {_files_text(items, origins)})")
+                    f"({_rows_text(items, first_row)}; {_files_text(items, origins)})")
 
+    # 2. Duplicate IV No with Different Shippers
     ivs = {}
     for i, row in enumerate(rows):
         iv, shipper = _norm(_get(row, COL_IV_NO)), _norm(_get(row, COL_SHIPPER))
@@ -188,10 +230,46 @@ def check_duplicates(rows, origins, first_row=2):
     iv_dups = {k: v for k, v in ivs.items() if len(v["by"]) > 1}
     for entry in iv_dups.values():
         parts = [f"'{g['shown']}' ({_rows_text(g['rows'], first_row)}; {_files_text(g['rows'], origins)})"
-                 for g in entry["by"].values()]
+                for g in entry["by"].values()]
         flags.append(f"IV no '{entry['shown']}' is used with different shippers: " + " vs ".join(parts))
 
-    return flags, {"chassis": len(chassis_dups), "iv": len(iv_dups)}
+    # 3. Uniform Value Checks for Vessel, POL, and POD
+    vessel_mismatches = 0
+    pol_mismatches = 0
+    pod_mismatches = 0
+
+    field_checks = [
+        (COL_VESSEL, "Ocean Vessel", "AT"),
+        (COL_POL, "Port of Loading", "AW"),
+        (COL_POD, "Port of Discharge", "AX"),
+    ]
+
+    for col_idx, field_name, col_letter in field_checks:
+        grouped = {}
+        for i, row in enumerate(rows):
+            val = _norm(_get(row, col_idx))
+            if val:
+                grouped.setdefault(val, {"shown": _shown(_get(row, col_idx)), "rows": []})["rows"].append(i)
+        
+        if len(grouped) > 1:
+            if col_idx == COL_VESSEL:
+                vessel_mismatches = len(grouped)
+            elif col_idx == COL_POL:
+                pol_mismatches = len(grouped)
+            elif col_idx == COL_POD:
+                pod_mismatches = len(grouped)
+
+            parts = [f"'{g['shown']}' ({_rows_text(g['rows'], first_row)}; {_files_text(g['rows'], origins)})"
+                    for g in grouped.values()]
+            flags.append(f"Mismatched {field_name} (Col {col_letter}) found multiple distinct values: " + " vs ".join(parts))
+
+    return flags, {
+        "chassis": len(chassis_dups),
+        "iv": len(iv_dups),
+        "vessel": vessel_mismatches,
+        "pol": pol_mismatches,
+        "pod": pod_mismatches,
+    }
 
 
 def _limit_flags(flags):
@@ -204,7 +282,7 @@ def _limit_flags(flags):
 # ENTRY POINT (called by Api.run_macro and the one-click pipeline)
 # --------------------------------------------------------------------------
 def process_shipping_list(file_paths, sheet_name="BASE", template_folder=None,
-                          output_path=None, ask_save_path=None, confirm=None):
+                        output_path=None, ask_save_path=None, confirm=None):
     """
     Combines the BASE rows of the selected files into a fresh copy of the bundled
     SO.UT.ATTACH.xlsm template (macros kept) and saves it as a NEW file.
@@ -212,9 +290,9 @@ def process_shipping_list(file_paths, sheet_name="BASE", template_folder=None,
 
     output_path:   full path to save to. If given, no dialog is shown.
     ask_save_path: function(suggested_name, start_dir) -> chosen path, or None if cancelled.
-                   It is called after the data is ready, so the user picks the location last.
+                It is called after the data is ready, so the user picks the location last.
     confirm:       function(title, text) -> True / False. Used to ask "save anyway?" when the double
-                   checks find duplicates. Without it the flags are only returned as warnings.
+                checks find duplicates. Without it the flags are only returned as warnings.
     template_folder is accepted only so older callers do not break; it is ignored.
     """
     template, tried = find_template()
@@ -296,12 +374,20 @@ def process_shipping_list(file_paths, sheet_name="BASE", template_folder=None,
     except Exception as exc:
         return {"ok": False, "message": f"Template write error: {exc}"}
 
+    # message = f"Shipping list saved: {out_path.name} ({processed} file(s), {len(all_rows)} total rows)."
+    # if errors:
+    #     message += f" {len(errors)} file(s) skipped."
+    # if flags:
+    #     message += (f" CHECK: {counts['chassis']} duplicate chassis no, "
+    #                 f"{counts['iv']} IV no with different shippers (see the warnings).")
+    
     message = f"Shipping list saved: {out_path.name} ({processed} file(s), {len(all_rows)} total rows)."
     if errors:
         message += f" {len(errors)} file(s) skipped."
     if flags:
         message += (f" CHECK: {counts['chassis']} duplicate chassis no, "
-                    f"{counts['iv']} IV no with different shippers (see the warnings).")
+                    f"{counts['iv']} IV no with different shippers, "
+                    f"and vessel/POL/POD mismatches (see the warnings).")
     return {
         "ok": True,
         "message": message,

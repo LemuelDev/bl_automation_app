@@ -194,10 +194,11 @@ class PipelineRunner:
         if s1.find_template()[0] is None:
             problems.append(f"Template not found for Stage 1: {s1.TEMPLATE_NAME} (project templates folder)")
 
-        # Check Stage 2 templates
+        # Check Stage 2 templates using s2's find_template resolver
         for name in (s2.SINGLE_TEMPLATE_NAME, s2.MULTI_TEMPLATE_NAME):
-            if not (Path(s2.TEMPLATE_DIR) / name).is_file():
-                problems.append(f"Template not found for Stage 2: {Path(s2.TEMPLATE_DIR) / name}")
+            path, tried = s2.find_template(name)
+            if path is None:
+                problems.append(f"Template not found for Stage 2: {name} (looked in {tried[0].parent})")
         
         # Check Stage 4 internal project templates (Standard & Navis)
         for (kind, navis), filename in s4.TEMPLATE_FILES.items():
