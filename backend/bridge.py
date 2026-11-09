@@ -13,7 +13,7 @@ from backend.macros.all_bl import process_all_bl
 from backend.macros.sample import PipelineRunner
 
 def _expand_to_xlsm(folder_or_files):
-    """Folder, file path, or list of either -> list of .xlsm file paths (no ~$ temp files)."""
+    """Folder, file path, or list of either -> list of .xlsm file paths (searches subdirectories too, no ~$ temp files)."""
     if isinstance(folder_or_files, (str, os.PathLike)):
         folder_or_files = [folder_or_files]
 
@@ -21,12 +21,15 @@ def _expand_to_xlsm(folder_or_files):
     for item in folder_or_files:
         item = os.fspath(item)
         if os.path.isdir(item):
-            for name in sorted(os.listdir(item)):
-                if name.lower().endswith(".xlsm") and not name.startswith("~$"):
-                    files.append(os.path.join(item, name))
-        elif os.path.isfile(item):
+            # Walk through the directory and all its subdirectories (like SINGLE and MULTI)
+            for root, dirs, filenames in os.walk(item):
+                for name in sorted(filenames):
+                    if name.lower().endswith(".xlsm") and not name.startswith("~$"):
+                        files.append(os.path.join(root, name))
+        elif os.path.isfile(item) and not os.path.basename(item).startswith("~$"):
             files.append(item)
-    return list(dict.fromkeys(files))   # de-duplicate, keep order
+            
+    return list(dict.fromkeys(files))    # de-duplicate, keep order
 
 
 class Api:

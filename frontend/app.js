@@ -19,7 +19,7 @@ const MODULES = [
     title: "3. Input Data (Base B1)", 
     auto: true, 
     ready: true, 
-    accepts: "files",
+    accepts: "folder",
     desc: "Select all .xlsm files in the WIP BL/FOR RPA in the downloads folder.", 
     hint: "Read and process .xlsm files from FOR RPA FOLDER." 
   },
