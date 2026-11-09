@@ -18,25 +18,79 @@
 <div class="bg" aria-hidden="true"><i></i><i></i><i></i></div>
 
 <div class="app">
-  <!-- Top Navigation Bar -->
-  <header class="top-nav glass">
-    <div class="brand">
-        
-      <div>
-        <div class="brand-title">BL AUTOMATION APP</div>
-        <div class="muted small">Bill of Lading Document Automation</div>
-      </div>
-    </div>
 
-    <!-- Right-aligned group holding Nav Tabs and Theme Toggle -->
-    <div class="header-right-group">
-      <nav class="nav" id="nav"></nav>
-      <button class="theme-icon-btn" id="theme-toggle" aria-label="Toggle color theme" title="Toggle theme">
-        <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2m-4.22-7.78l-1.42 1.42M5.64 18.36l-1.42 1.42"/></svg>
-        <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-      </button>
+<!-- Top Navigation Bar -->
+<header class="top-nav glass">
+  <div class="brand">
+    <div>
+      <div class="brand-title">BL AUTOMATION APP</div>
+      <div class="muted small">Bill of Lading Document Automation</div>
     </div>
-  </header>
+  </div>
+
+  <!-- Right-aligned group holding Nav Tabs, Hint Button, and Theme Toggle -->
+  <div class="header-right-group">
+    <nav class="nav" id="nav"></nav>
+    
+    <!-- Hint / Guide Button -->
+    <button class="hint-icon-btn" id="hint-toggle" aria-label="Open Usage Guide" title="How to use">
+      <svg class="icon-help" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+      </svg>
+    </button>
+
+    <!-- Theme Toggle -->
+    <button class="theme-icon-btn" id="theme-toggle" aria-label="Toggle color theme" title="Toggle theme">
+      <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2m-4.22-7.78l-1.42 1.42M5.64 18.36l-1.42 1.42"/></svg>
+      <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- Usage Guide Modal -->
+<div class="modal-backdrop" id="guide-modal" aria-hidden="true">
+  <div class="modal-card glass">
+    <div class="modal-header">
+      <h3 class="modal-title">How to Use BL Automation App</h3>
+      <button class="modal-close" id="close-guide-modal" aria-label="Close modal">&times;</button>
+    </div>
+    <div class="modal-body">
+      
+    <!-- Section 1: Create BL (All in One Processing) -->
+<div class="guide-section">
+  <div class="guide-badge">Standard</div>
+  <h4>Create BL (All in One Processing)</h4>
+  <ol class="guide-steps">
+    <li><strong>Set Vessel Details:</strong> Fill in the Vessel Name, Voyage (VOY), Port of Loading (POL), Port of Discharge (POD), Estimated Time of Departure (ETD), and check the NAVIS option if applicable.</li>
+    <li><strong>Select Source Files:</strong> Choose the target IV files for the vessel.</li>
+    <li><strong>Execute Processing:</strong> Click <em>Create BL</em> to start the automated workflow.</li>
+    <li><strong>Output Destination:</strong> Generated files will be saved in <code>BLC ALL MACRO/WIP BL/</code> and its subfolders (<code>FOR RPA</code>, <code>BL</code>, and <code>BL OUTPUT</code>).</li>
+  </ol>
+</div>
+
+<!-- Section 2: Create BL Per Macro Automation -->
+<div class="guide-section">
+  <div class="guide-badge macro">Macro Driven</div>
+  <h4>Create BL Per Macro Automation</h4>
+  <ol class="guide-steps">
+    <li><strong>Stage 1 (Shipping List):</strong> Select IV files to generate and save the Shipping List.</li>
+    <li><strong>Stage 2 (Separate Units):</strong> Select the folder containing the IV files to separate Single and Multi-unit files.</li>
+    <li><strong>Stage 3 (RPA Setup):</strong> Select the <code>FOR RPA</code> folder.</li>
+    <li><strong>Stage 4 (BL Copy):</strong> Select the <code>FOR RPA</code> folder.</li>
+    <li><strong>Stage 5 (Checker & Table):</strong> Select the <code>BL/ALL</code> folder to generate and save the Checker Result and IV Table.</li>
+    <li><strong>Stage 6 (BL Formatting):</strong> Select the <code>BL/ALL</code> folder.</li>
+    <li><strong>Stage 7 (Attach Sheet):</strong> Select the <code>FOR RPA/MULTI</code> folder to transfer the <code>ATCH (2)</code> sheet into matching BL files.</li>
+    <li><strong>Stage 8 (Finalize BL):</strong> Select the <code>BL/ALL</code> folder to finalize all documents.</li>
+    <li><strong>Output Destination:</strong> All output files will be structured inside <code>BLC ALL MACRO/WIP BL/</code> across the <code>FOR RPA</code>, <code>BL</code>, and <code>BL OUTPUT</code> subfolders.</li>
+  </ol>
+</div>
+
+    </div>
+  </div>
+</div>
+
 
   <!-- Main Content Deck -->
   <main class="deck" id="deck">

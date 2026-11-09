@@ -165,10 +165,13 @@ class Api:
             
             # Stage 5: checker result
             if macro_id in ["checker", "stage_5"]:
-                return process_checker_result(
+                res = process_checker_result(
                     folder_or_files=folder_or_files,
                     ask_save_path=lambda name, start: self._ask_save_path(name, start, "xlsx"),
                 )
+                # Ensure the bridge returns the result dictionary directly, 
+                # which already contains both output_path and iv_kanri_path.
+                return res
                 
             # Stage 6: removing zero
             if macro_id in ["remove_zeros", "stage_6"]:

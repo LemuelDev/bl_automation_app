@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
 /* Global font setup */
 body {
   font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -67,8 +68,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 .brand-mark{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-weight:600;color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent2))}
 .brand-title{font-weight:600;font-size:15px;line-height:1.2}
 
-/* Header Right Group */
-.header-right-group{display:flex;align-items:center;gap:12px}
+/* Header Right Group & Action Buttons */
+.header-right-group{display:flex;align-items:center;gap:10px}
 
 /* Nav Tabs */
 .nav{display:flex;gap:6px;background:var(--fill);padding:4px;border-radius:12px;border:1px solid var(--line)}
@@ -76,10 +77,10 @@ button{font:inherit;color:inherit;cursor:pointer}
 .nav button:hover{color:var(--text)}
 .nav button.is-active{background:var(--sel);color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,.06)}
 
-/* Theme Icon Button */
-.theme-icon-btn{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--fill);display:grid;place-items:center;color:var(--muted);transition:all .2s}
-.theme-icon-btn:hover{background:var(--fill-2);color:var(--text);transform:scale(1.05)}
-.theme-icon-btn svg{width:18px;height:18px;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;fill:none}
+/* Theme & Hint Icon Buttons */
+.theme-icon-btn, .hint-icon-btn{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--fill);display:grid;place-items:center;color:var(--muted);transition:all .2s}
+.theme-icon-btn:hover, .hint-icon-btn:hover{background:var(--fill-2);color:var(--text);transform:scale(1.05)}
+.theme-icon-btn svg, .hint-icon-btn svg{width:18px;height:18px;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;fill:none}
 [data-theme="dark"] .icon-moon{display:none}
 [data-theme="light"] .icon-sun{display:none}
 
@@ -87,13 +88,48 @@ button{font:inherit;color:inherit;cursor:pointer}
 .deck{flex:1;overflow-y:auto;padding:24px 28px 40px;max-width:1100px;width:100%;margin:0 auto}
 .view{display:none}
 .view.is-active{display:block}
-.view-header{margin-bottom:20px}
+.view-header{margin-bottom:20px;display:flex;flex-direction:column;gap:12px}
+.header-top-row{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.view-header .eyebrow{font-size:13px;color:var(--muted);font-weight:500}
+
 h1{font-size:24px;font-weight:600;letter-spacing:-.01em}
 h2{font-size:17px;font-weight:500;margin-bottom:12px}
 h3{font-size:15px;font-weight:500;margin-bottom:12px}
 .sub{color:var(--muted);font-size:13px;margin-top:2px}
-.back{border:0;background:none;color:var(--link);padding:0;margin-bottom:8px;font-weight:500}
-.back:hover{text-decoration:underline}
+
+/* Minimalist Back Button */
+button.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid var(--line);
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  color: var(--link);
+  transition: all 0.2s ease;
+}
+button.back:hover,
+button.back:focus {
+  background: var(--fill);
+  border-color: var(--accent);
+  text-decoration: none;
+}
+button.back .back-icon {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s ease;
+}
+button.back:hover .back-icon {
+  transform: translateX(-3px);
+}
+button.back:active {
+  transform: scale(0.98);
+}
 
 /* Buttons */
 .btn{border:1px solid var(--line);background:var(--fill);padding:9px 18px;border-radius:12px;transition:all .15s;font-weight:500;display:inline-flex;align-items:center;gap:8px}
@@ -145,12 +181,14 @@ h3{font-size:15px;font-weight:500;margin-bottom:12px}
 
 /* Summary Box */
 .summary{margin-top:14px;padding:14px 16px;border-radius:12px;border:1px solid var(--line);background:var(--fill)}
-.summary.is-ok{border-color:color-mix(in srgb,var(--ok) 50%,transparent)}
-.summary.is-fail{border-color:color-mix(in srgb,var(--err) 50%,transparent)}
 .summary h4{font-weight:500;margin-bottom:2px}
 .summary details{margin-top:8px}
 .summary summary{cursor:pointer}
 .summary ul{margin:6px 0 0 16px;font-size:12px;color:var(--muted)}
+.summary.is-ok {border-color: rgba(72, 187, 120, 0.4);}
+.summary.is-ok h4, .summary.is-ok p {color: #48bb78 !important;}
+.summary.is-fail {border-color: rgba(245, 101, 101, 0.4);}
+.summary.is-fail h4, .summary.is-fail p {color: #f56565 !important;}
 
 /* Stage Cards Grid */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
@@ -168,13 +206,107 @@ h3{font-size:15px;font-weight:500;margin-bottom:12px}
 .module-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
 .panel{padding:20px}
 
-/* Modal */
-.modal{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:var(--scrim);backdrop-filter:blur(6px)}
-.modal[hidden]{display:none}
-.modal-card{width:min(420px,92vw);padding:24px;background:var(--modal)}
-.modal-card h3{margin-bottom:6px}
-.modal-list{list-style:none;padding:0;margin:12px 0 0}
-.modal-list li{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px}
+/* Modal & Guide Card Styles */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--scrim);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.modal-backdrop.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+.modal-card {
+  width: 90%;
+  max-width: 650px;
+  background: var(--modal);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+  max-height: 85vh;
+  overflow-y: auto;
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+.modal-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.modal-close:hover {
+  color: var(--text);
+}
+
+/* Guide Sections inside Modal */
+.guide-section {
+  position: relative;
+  background: var(--fill);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+.guide-badge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: var(--sel);
+  color: var(--accent);
+  font-weight: 600;
+  border: 1px solid var(--line);
+}
+.guide-badge.macro {
+  background: rgba(168, 85, 247, 0.15);
+  color: #c084fc;
+}
+.guide-section h4 {
+  margin: 0 0 10px 0;
+  font-size: 0.95rem;
+}
+.guide-steps {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.guide-steps li {
+  margin-bottom: 6px;
+}
+.guide-steps code {
+  background: var(--fill-2);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  color: var(--text);
+}
 
 .is-busy .card, .is-busy #create-btn, .is-busy [data-act="run"], .is-busy .nav button:not(.is-active){pointer-events:none;opacity:.45}
 
@@ -184,7 +316,7 @@ h3{font-size:15px;font-weight:500;margin-bottom:12px}
   .module-grid{grid-template-columns:1fr}
 }
 
-/* Sleek, minimalist scrollbar for the log and right-side content */
+/* Custom Sleek Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -193,89 +325,9 @@ h3{font-size:15px;font-weight:500;margin-bottom:12px}
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--line);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-/* Success State (Green) */
-.summary.is-ok {
-  border-color: rgba(72, 187, 120, 0.4);
-}
-.summary.is-ok h4,
-.summary.is-ok p {
-  color: #48bb78 !important;
-}
-
-/* Failure State (Red) */
-.summary.is-fail {
-  border-color: rgba(245, 101, 101, 0.4);
-}
-.summary.is-fail h4,
-.summary.is-fail p {
-  color: #f56565 !important;
-}
-
-/* Layout container for the header elements */
-.view-header {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 24px;
-}
-
-/* Row holding the Back button and the "Stage 1" tag side by side */
-.header-top-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-/* Minimalist Back Button Styling */
-button.back {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 8px 14px;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  text-decoration: none; /* Ensures no underline */
-  transition: all 0.2s ease;
-  border: 1px solid navy;
-}
-
-/* Prevent text decoration/underline on hover/focus */
-button.back:hover,
-button.back:focus {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.2);
-  text-decoration: none; 
-}
-
-button.back .back-icon {
-  width: 16px;
-  height: 16px;
-  transition: transform 0.2s ease;
-}
-
-button.back:hover .back-icon {
-  transform: translateX(-3px);
-}
-
-button.back:active {
-  transform: scale(0.98);
-}
-
-/* Styling for the eyebrow/stage text next to it */
-.view-header .eyebrow {
-  font-size: 13px;
-  color: #a1a1aa;
-  font-weight: 500;
+  background: var(--muted);
 }

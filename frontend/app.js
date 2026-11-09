@@ -554,6 +554,33 @@ window.addEventListener("pywebviewready", async () => {
 });
 
 
+document.addEventListener('DOMContentLoaded', () => {
+  const hintBtn = document.getElementById('hint-toggle');
+  const guideModal = document.getElementById('guide-modal');
+  const closeModalBtn = document.getElementById('close-guide-modal');
+
+  // Open modal
+  hintBtn.addEventListener('click', () => {
+    guideModal.classList.add('active');
+    guideModal.setAttribute('aria-hidden', 'false');
+  });
+
+  // Close modal via close button
+  closeModalBtn.addEventListener('click', () => {
+    guideModal.classList.remove('active');
+    guideModal.setAttribute('aria-hidden', 'true');
+  });
+
+  // Close modal when clicking on the backdrop
+  guideModal.addEventListener('click', (e) => {
+    if (e.target === guideModal) {
+      guideModal.classList.remove('active');
+      guideModal.setAttribute('aria-hidden', 'true');
+    }
+  });
+});
+
+
 
 
 
