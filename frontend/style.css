@@ -206,7 +206,21 @@ button.back:active {
 .module-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
 .panel{padding:20px}
 
-/* Modal & Guide Card Styles */
+/* Modal Dialog & Guide Card Styles */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  background: var(--scrim);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.modal[hidden] {
+  display: none !important;
+}
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -226,7 +240,7 @@ button.back:active {
   pointer-events: auto;
 }
 .modal-card {
-  width: 90%;
+  width: min(580px, 92vw);
   max-width: 650px;
   background: var(--modal);
   border: 1px solid var(--line);
@@ -259,6 +273,18 @@ button.back:active {
 }
 .modal-close:hover {
   color: var(--text);
+}
+.modal-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+}
+.modal-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
 }
 
 /* Guide Sections inside Modal */
