@@ -1,9 +1,19 @@
 import os
+import sys
 from pathlib import Path
 import webview
 from backend.bridge import Api
 
 APP_TITLE = "BL Creation App"
+
+def resource_path(relative_path):
+    """ Get the absolute path to a resource, works for both development and PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores the path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
 def ensure_blc_directory_structure() -> dict:
     """
@@ -45,7 +55,9 @@ def main():
 
     # 2. Initialize application API and window UI
     api = Api()
-    frontend_path = os.path.join(os.path.dirname(__file__), "frontend", "index.html")
+    
+    # Use resource_path so PyInstaller can locate index.html inside the bundle
+    frontend_path = resource_path(os.path.join("frontend", "index.html"))
 
     window = webview.create_window(
         APP_TITLE,
@@ -62,32 +74,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-# import os
-# import webview
-# from backend.bridge import Api
-
-# APP_TITLE = "BL Creation App"
-
-# def main():
-#     api = Api()
-#     frontend_path = os.path.join(os.path.dirname(__file__), "frontend", "index.html")
-
-#     window = webview.create_window(
-#         APP_TITLE,
-#         frontend_path,
-#         js_api=api,
-#         width=1200,
-#         height=800,
-#         resizable=False,
-#         min_size=(1000, 650),
-#         background_color="#0f1220",
-#     )
-#     api.set_window(window)
-#     webview.start(debug=False)
-
-# if __name__ == "__main__":
-#     main()
-
