@@ -432,12 +432,29 @@ def copy_sheet(src, cached, dst_wb, title, mapping, dst=None):
         nd = dst.row_dimensions[key]
         nd.height, nd.hidden, nd.outlineLevel = dim.height, dim.hidden, dim.outlineLevel
 
-    # Page and view settings
+    # # Page and view settings
+    # dst.sheet_format = copy(src.sheet_format)
+    # dst.sheet_properties = copy(src.sheet_properties)
+    # dst.sheet_properties.codeName = keep_code_name         # code names must remain unique
+    # dst.page_margins = copy(src.page_margins)
+    # dst.page_setup = copy(src.page_setup)
+    # dst.print_options = copy(src.print_options)
+    # dst.sheet_state = src.sheet_state
+    
+    # Sheet format, properties, and page settings
     dst.sheet_format = copy(src.sheet_format)
     dst.sheet_properties = copy(src.sheet_properties)
     dst.sheet_properties.codeName = keep_code_name         # code names must remain unique
     dst.page_margins = copy(src.page_margins)
     dst.page_setup = copy(src.page_setup)
+    dst.page_setup.orientation = src.page_setup.orientation or "portrait"
+    dst.page_setup.paperSize = src.page_setup.paperSize or 9
+    
+    # Enable Auto-Fit to 1 Page Wide across different PC resolutions/printers
+    dst.page_setup.fitToWidth = 1
+    dst.page_setup.fitToHeight = 0                          # Allows rows to flow naturally across multiple pages
+    dst.sheet_properties.pageSetUpPr.fitToPage = True
+
     dst.print_options = copy(src.print_options)
     dst.sheet_state = src.sheet_state
 

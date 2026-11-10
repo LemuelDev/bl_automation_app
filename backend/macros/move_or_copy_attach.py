@@ -207,10 +207,36 @@ def copy_sheet(src, dst_wb, title, scale=1.0):
         nd.hidden, nd.outlineLevel = dim.hidden, dim.outlineLevel
 
     # page setup and printing
-    dst.sheet_properties = copy(src.sheet_properties)   # includes fit-to-page
-    dst.sheet_properties.codeName = None                # a macro code name must be unique in the BL file
+    # dst.sheet_properties = copy(src.sheet_properties)   # includes fit-to-page
+    # dst.sheet_properties.codeName = None                # a macro code name must be unique in the BL file
+    # dst.page_margins = copy(src.page_margins)
+    # dst.page_setup = copy(src.page_setup)
+    # dst.print_options = copy(src.print_options)
+    # dst.sheet_state = src.sheet_state
+    
+    # Page setup and printing properties
+    dst.sheet_properties = copy(src.sheet_properties)   
+    dst.sheet_properties.codeName = None                
     dst.page_margins = copy(src.page_margins)
+    
+    # 1. Configure page setup for orientation and paper size (9 = A4)
     dst.page_setup = copy(src.page_setup)
+    dst.page_setup.orientation = src.page_setup.orientation or "portrait"
+    dst.page_setup.paperSize = src.page_setup.paperSize or 9
+    
+    # 2. Enable Auto-Fit to 1 Page Wide (fixes columns L & M spilling over)
+    dst.page_setup.fitToWidth = 1
+    dst.page_setup.fitToHeight = 0  # 0 allows vertical rows to flow naturally across multiple pages
+    dst.sheet_properties.pageSetUpPr.fitToPage = True
+    
+    # 3. Adjust Print Area to include up to Column M (instead of stopping at K)
+    if src.print_area:
+        raw_area = str(src.print_area).split("!")[-1].replace("$", "")
+        # If the source print area ends at column K, automatically expand it to column M
+        if "K" in raw_area:
+            raw_area = raw_area.replace("K", "M")
+        dst.print_area = raw_area
+
     dst.print_options = copy(src.print_options)
     dst.sheet_state = src.sheet_state
     for attr in ("row_breaks", "col_breaks", "HeaderFooter"):
