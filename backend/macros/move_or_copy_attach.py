@@ -156,8 +156,8 @@ def _width_scale(src_wb, dst_wb):
 # SHEET COPY (one worksheet into ANOTHER workbook, same look)
 # --------------------------------------------------------------------------
 _VIEW_ATTRS = ("view", "showGridLines", "showRowColHeaders", "showFormulas", "showZeros", "showOutlineSymbols",
-               "showRuler", "showWhiteSpace", "rightToLeft", "defaultGridColor", "zoomScale", "zoomScaleNormal",
-               "zoomScaleSheetLayoutView", "zoomScalePageLayoutView")
+            "showRuler", "showWhiteSpace", "rightToLeft", "defaultGridColor", "zoomScale", "zoomScaleNormal",
+            "zoomScaleSheetLayoutView", "zoomScalePageLayoutView")
 
 
 def copy_sheet(src, dst_wb, title, scale=1.0):

@@ -269,6 +269,8 @@ MODULE_TEMPLATE = "BL_OUTPUT.xlsm"  # in the project's "templates" folder: one b
 
 _EXTERNAL = re.compile(r"\[\d+\]")       # a formula that points to another workbook, e.g. =[1]Sheet1!A1
 
+WIDTH_SCALE = "auto"
+BLANK_ZEROS = False 
 
 # --------------------------------------------------------------------------
 # TEMPLATE LOOKUP (bundled with the project)
@@ -395,19 +397,33 @@ def copy_sheet(src, cached, dst_wb, title, mapping, dst=None):
     for row in src.iter_rows():
         for c in row:
             v = c.value
+
+            # Evaluate formulas and cached values
             if c.data_type == "f":
                 v = _formula_value(c, v, cached, src.title, mapping, warnings)
+
+            # Apply BLANK_ZEROS rule if explicitly enabled
+            if BLANK_ZEROS and isinstance(v, (int, float)) and not isinstance(v, bool) and v == 0:
+                v = None
+
+            # Skip empty cells with no styling
             if v is None and not c.has_style:
                 continue
+
             d = dst.cell(row=c.row, column=c.column, value=v)
+
             if c.has_style:
-                d.font = copy(c.font)
+                f = copy(c.font)
+                if f.scheme:
+                    f.scheme = None                        # prevent theme shift across workbooks
+                d.font = f
                 d.border = copy(c.border)
                 d.fill = copy(c.fill)
                 d.number_format = c.number_format
                 d.protection = copy(c.protection)
                 d.alignment = copy(c.alignment)
 
+    # Column widths and row heights
     for key, dim in src.column_dimensions.items():
         nd = dst.column_dimensions[key]
         nd.min, nd.max = dim.min, dim.max
@@ -416,24 +432,27 @@ def copy_sheet(src, cached, dst_wb, title, mapping, dst=None):
         nd = dst.row_dimensions[key]
         nd.height, nd.hidden, nd.outlineLevel = dim.height, dim.hidden, dim.outlineLevel
 
+    # Page and view settings
     dst.sheet_format = copy(src.sheet_format)
     dst.sheet_properties = copy(src.sheet_properties)
-    dst.sheet_properties.codeName = keep_code_name         # never carry a code name over (they must be unique)
+    dst.sheet_properties.codeName = keep_code_name         # code names must remain unique
     dst.page_margins = copy(src.page_margins)
     dst.page_setup = copy(src.page_setup)
     dst.print_options = copy(src.print_options)
     dst.sheet_state = src.sheet_state
+
     try:
         dst.HeaderFooter = copy(src.HeaderFooter)
         dst.print_title_rows = src.print_title_rows
         if src.print_area:
             dst.print_area = str(src.print_area).split("!")[-1].replace("$", "")
-        for attr in ("view", "showGridLines", "zoomScale", "zoomScaleNormal", "zoomScaleSheetLayoutView"):
-            setattr(dst.sheet_view, attr, getattr(src.sheet_view, attr))
+        for attr in ("view", "showGridLines", "showZeros", "zoomScale", "zoomScaleNormal", "zoomScaleSheetLayoutView"):
+            if hasattr(src.sheet_view, attr):
+                setattr(dst.sheet_view, attr, getattr(src.sheet_view, attr))
     except Exception:
         warnings.append("some print or view settings could not be copied")
 
-    for rng in list(src.merged_cells.ranges):                  # merge last, so no cell write hits a merged cell
+    for rng in list(src.merged_cells.ranges):                  # merge last to avoid collision
         dst.merge_cells(str(rng))
 
     images = list(getattr(src, "_images", []) or [])
@@ -446,6 +465,7 @@ def copy_sheet(src, cached, dst_wb, title, mapping, dst=None):
                 dst.add_image(new)
         except Exception:
             warnings.append("pictures could not be copied")
+
     if getattr(src, "_charts", None):
         warnings.append("charts were not copied")
     try:
@@ -453,6 +473,7 @@ def copy_sheet(src, cached, dst_wb, title, mapping, dst=None):
             warnings.append("conditional formatting was not copied")
     except Exception:
         pass
+
     return warnings
 
 
@@ -462,7 +483,7 @@ def _open_module_template():
     if template is None:
         listing = "\n".join(f"  {p}" for p in tried)
         return None, (f"The template '{MODULE_TEMPLATE}' was not found in the project's templates folder "
-                      f"(a blank workbook that contains the SpellNumber module, saved as .xlsm). Looked in:\n{listing}")
+                    f"(a blank workbook that contains the SpellNumber module, saved as .xlsm). Looked in:\n{listing}")
     wb = load_workbook(template, keep_vba=True)
     problem = None
     if not wb.vba_archive or "xl/vbaProject.bin" not in wb.vba_archive.namelist():
