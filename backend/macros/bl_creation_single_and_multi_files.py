@@ -37,7 +37,7 @@ VESSEL_CELLS = {
     "etd": ("B57",),             # ETD (written as a real date)
 }
 VESSEL_LABELS = {"name": "Vessel name", "voyage": "Voy no.", "pol": "POL", "pod": "POD"}
-ETD_NUMBER_FORMAT = "mm/dd/yyyy"  # how the ETD date shows in the BL
+ETD_NUMBER_FORMAT = "dd/mm/yyyy"  # how the ETD date shows in the BL
 UPPERCASE_DETAILS = True          # BL documents are in capitals; spaces are tidied too
 
 BL_OUT = BL_ROOT / "WIP BL" / "BL"
