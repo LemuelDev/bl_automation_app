@@ -4,7 +4,7 @@ import sys
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
-
+from decimal import Decimal, ROUND_HALF_UP
 from openpyxl import load_workbook
 from python_calamine import CalamineWorkbook
 
@@ -53,6 +53,14 @@ def find_template():
 # --------------------------------------------------------------------------
 # HELPERS
 # --------------------------------------------------------------------------
+def _commercial_round(value):
+    """Strict commercial rounding (round half up) to 3 decimal places."""
+    try:
+        d = Decimal(str(value))
+        return float(d.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP))
+    except (ValueError, TypeError):
+        return 0.0
+
 def _blank(v):
     return v is None or (isinstance(v, str) and v.strip() == "")
 
@@ -341,16 +349,60 @@ def process_shipping_list(file_paths, sheet_name="BASE", template_folder=None,
             return {"ok": False, "message": f"The template has no '{TEMPLATE_SHEET}' sheet."}
         ws = wb[ws_name]
 
+        # cell = ws.cell
+        # for r, row in enumerate(all_rows, start=2):
+        #     for c, v in enumerate(row, start=1):
+        #         if v is None or v == "":
+        #             continue                               # no cell object for blanks
+        #         if isinstance(v, str):
+        #             v = _ILLEGAL.sub("", v)
+        #             if not v:
+        #                 continue
+        #         cell(row=r, column=c, value=v)
+        
+        # Target column numbers (1-based index)
+        COL_DZ = 130  # Length
+        COL_EA = 131  # Width
+        COL_EB = 132  # Height
+        COL_ED = 134  # M3
+
         cell = ws.cell
         for r, row in enumerate(all_rows, start=2):
+            # Track dimensions for this row to compute M3 directly
+            row_length = 0
+            row_width = 0
+            row_height = 0
+
+            # First pass: write cells and capture dimensions
             for c, v in enumerate(row, start=1):
                 if v is None or v == "":
-                    continue                               # no cell object for blanks
+                    continue
                 if isinstance(v, str):
                     v = _ILLEGAL.sub("", v)
                     if not v:
                         continue
+                
+                # Force dimensions to clean integers
+                if c in (COL_DZ, COL_EA, COL_EB):
+                    try:
+                        clean_int = int(round(float(v)))
+                        v = clean_int
+                        if c == COL_DZ: row_length = clean_int
+                        elif c == COL_EA: row_width = clean_int
+                        elif c == COL_EB: row_height = clean_int
+                    except (ValueError, TypeError):
+                        pass
+
                 cell(row=r, column=c, value=v)
+
+            # Compute and write exact commercial-rounded M3 into column ED (134)
+            if row_length > 0 and row_width > 0 and row_height > 0:
+                m3_exact = (row_length * row_width * row_height) / 1000000.0
+                m3_rounded = _commercial_round(m3_exact)
+                cell(row=r, column=COL_ED, value=m3_rounded)
+        
+        
+        
 
         # the data is ready: now ask where to save it
         if not output_path:

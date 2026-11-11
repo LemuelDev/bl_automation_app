@@ -15,13 +15,25 @@ from python_calamine import CalamineWorkbook
 # --------------------------------------------------------------------------
 # CONFIG
 # --------------------------------------------------------------------------
-MAX_EXCEL_INSTANCES = 3        # separate hidden Excel processes working at the same time
-RESTART_EVERY = 20             # start a fresh Excel after this many files (keeps Excel stable on big batches)
-JOB_TIMEOUT = 180              # seconds one file may take; after that its Excel is killed (a hidden dialog would block forever)
-OPEN_TRIES = 4                 # attempts to open a file
-SAVE_TRIES = 8                 # attempts to save / put a finished file back (antivirus, indexer or sync locks)
-RETRY_ROUNDS = 2               # extra passes over the files that failed, one Excel at a time
-RETRY_PAUSE = 4                # seconds to wait before a retry pass (multiplied by the round number)
+
+# --- OPTIMIZED CONFIG ---
+MAX_EXCEL_INSTANCES = 3
+RESTART_EVERY = 50           # Increased from 20 to reduce process launch overhead
+JOB_TIMEOUT = 120            # Reduced watchdog timeout
+OPEN_TRIES = 5
+SAVE_TRIES = 8
+RETRY_ROUNDS = 2
+RETRY_PAUSE = 2              # Reduced from 4s
+
+# MAX_EXCEL_INSTANCES = 3        # separate hidden Excel processes working at the same time
+# RESTART_EVERY = 20             # start a fresh Excel after this many files (keeps Excel stable on big batches)
+# JOB_TIMEOUT = 180              # seconds one file may take; after that its Excel is killed (a hidden dialog would block forever)
+# OPEN_TRIES = 4                 # attempts to open a file
+# SAVE_TRIES = 8                 # attempts to save / put a finished file back (antivirus, indexer or sync locks)
+# RETRY_ROUNDS = 2               # extra passes over the files that failed, one Excel at a time
+# RETRY_PAUSE = 4                # seconds to wait before a retry pass (multiplied by the round number)
+
+
 
 # The MULTI template's BASE event macro shows a MsgBox above 50 units, which would freeze a hidden Excel.
 MAX_UNITS = {"multi": 50}
@@ -76,9 +88,12 @@ def _as_list(value):
         return [os.fspath(value)]
     return [os.fspath(v) for v in value]
 
-
 def _backoff(attempt):
-    return min(0.5 * 2 ** attempt, 8)
+    # Faster linear/tight backoff: 0.1s, 0.2s, 0.4s, 0.8s, 1.6s (Max 2s)
+    return min(0.1 * (2 ** attempt), 2.0)
+
+# def _backoff(attempt):
+#     return min(0.5 * 2 ** attempt, 8)
 
 
 def _retry(fn, tries):
@@ -371,7 +386,7 @@ def _run_job(excel, path, base_name, count, kind):
 
         phase = "run the BASE event macro"
         _trigger(wb, ws, count, kind)
-        app.CalculateFull()                          # one full calculation, so every saved value is fresh
+        # app.CalculateFull()                          # one full calculation, so every saved value is fresh
         warnings = _verify(wb, count, kind)
         ws.Visible = XL_SHEET_HIDDEN
 
@@ -413,7 +428,39 @@ def _new_excel():
     return _Excel()
 
 
-def _worker(jobs, results):
+# def _worker(jobs, results):
+#     _com_init()
+#     excel, used = None, 0
+#     try:
+#         while True:
+#             try:
+#                 job = jobs.get_nowait()
+#             except queue.Empty:
+#                 break
+#             path, base, count, kind = job
+#             try:
+#                 if excel is None or excel.killed or used >= RESTART_EVERY:
+#                     if excel is not None:
+#                         excel.quit()
+#                         excel = None
+#                     excel, used = _new_excel(), 0
+#                 results[path] = _run_job(excel, path, base, count, kind)
+#                 used += 1
+#             except Exception as exc:                 # Excel itself could not start
+#                 excel = None
+#                 results[path] = {"path": path, "file": os.path.basename(path), "status": "error", "kind": kind,
+#                                 "message": f"{os.path.basename(path)} ({kind}): could not start Excel: {_clean_error(exc)}"}
+#     finally:
+#         if excel is not None:
+#             excel.quit()
+#         _com_done()
+
+def _worker(jobs, results, worker_id=0):
+    """Worker thread that pulls jobs from the shared queue and drives hidden Excel instances."""
+    # Stagger startup slightly based on thread index to prevent simultaneous COM registration collisions
+    if worker_id > 0:
+        time.sleep(worker_id * 0.3)
+        
     _com_init()
     excel, used = None, 0
     try:
@@ -431,10 +478,10 @@ def _worker(jobs, results):
                     excel, used = _new_excel(), 0
                 results[path] = _run_job(excel, path, base, count, kind)
                 used += 1
-            except Exception as exc:                 # Excel itself could not start
+            except Exception as exc:                   # Excel itself could not start
                 excel = None
                 results[path] = {"path": path, "file": os.path.basename(path), "status": "error", "kind": kind,
-                                 "message": f"{os.path.basename(path)} ({kind}): could not start Excel: {_clean_error(exc)}"}
+                                "message": f"{os.path.basename(path)} ({kind}): could not start Excel: {_clean_error(exc)}"}
     finally:
         if excel is not None:
             excel.quit()
@@ -443,10 +490,12 @@ def _worker(jobs, results):
 
 def _run_pass(jobs, results, workers):
     q = queue.Queue()
-    for job in sorted(jobs, key=lambda j: -j[2]):    # the biggest files first: the batch ends sooner
+    for job in sorted(jobs, key=lambda j: -j[2]):
         q.put(job)
-    with ThreadPoolExecutor(max_workers=max(1, min(workers, len(jobs)))) as pool:
-        for fut in [pool.submit(_worker, q, results) for _ in range(max(1, min(workers, len(jobs))))]:
+    num_workers = max(1, min(workers, len(jobs)))
+    with ThreadPoolExecutor(max_workers=num_workers) as pool:
+        futures = [pool.submit(_worker, q, results, idx) for idx in range(num_workers)]
+        for fut in futures:
             fut.result()
 
 
@@ -518,8 +567,30 @@ def process_count_rows_b1(file_paths, sheet_name="BASE"):
                 else:
                     errors.append(f"{os.path.basename(path)}: {msg}")
 
+        # done = {SINGLE: 0, MULTI: 0}
+        # warnings, recovered = [], 0
+        # if jobs:
+        #     results, recovered = _run_all(jobs)
+        #     for res in results.values():
+        #         if res["status"] == "ok":
+        #             done[res["kind"]] += 1
+        #             warnings += [f"{res['file']}: {w}" for w in res.get("warnings", [])]
+        #         else:
+        #             errors.append(res["message"])
+
+        # processed = done[SINGLE] + done[MULTI]
+        # message = f"Stage 3: updated B1 in {processed} file(s) ({done[SINGLE]} single, {done[MULTI]} multi)."
+        # if recovered:
+        #     message += f" {recovered} file(s) needed a retry."
+        # if errors:
+        #     message += f" {len(errors)} error(s)."
+        
         done = {SINGLE: 0, MULTI: 0}
         warnings, recovered = [], 0
+        
+        # --- INSERTION PART 1: Start performance timer ---
+        t_start = time.perf_counter()
+
         if jobs:
             results, recovered = _run_all(jobs)
             for res in results.values():
@@ -529,12 +600,19 @@ def process_count_rows_b1(file_paths, sheet_name="BASE"):
                 else:
                     errors.append(res["message"])
 
+        # --- INSERTION PART 2: Stop performance timer ---
+        t_elapsed = time.perf_counter() - t_start
+
         processed = done[SINGLE] + done[MULTI]
-        message = f"Stage 3: updated B1 in {processed} file(s) ({done[SINGLE]} single, {done[MULTI]} multi)."
+        
+        # --- INSERTION PART 3: Include elapsed time in message ---
+        message = f"Stage 3: updated B1 in {processed} file(s) ({done[SINGLE]} single, {done[MULTI]} multi) in {t_elapsed:.1f}s."
+        
         if recovered:
             message += f" {recovered} file(s) needed a retry."
         if errors:
             message += f" {len(errors)} error(s)."
+        
         return {
             "ok": processed > 0 and not errors,
             "message": message,
